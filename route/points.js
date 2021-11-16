@@ -1,8 +1,16 @@
 const express = require('express');
-const router = express.Router();
+const pointsRouter = express.Router();
+const totalPoints = require('../Points')
 
-router.get('/', (req, res) => {
-    res.send('hello')
+pointsRouter.get('/', (req, res) => {
+    for([key, value] of Object.entries({totalPoints})){
+        console.log(`${key}: ${value}`);
+    }
+    res.json(totalPoints);
+})
+.put('/', (req, res) => {
+    let pointsToSpend = req.body.points;
+    res.json(pointsToSpend)
 })
 
 // GET return all payer point balances
@@ -19,4 +27,4 @@ router.get('/', (req, res) => {
 
 
 
-module.exports = router;
+module.exports = pointsRouter;

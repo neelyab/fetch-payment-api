@@ -1,14 +1,16 @@
 const express = require('express');
 const app = express();
-
-const points = require('./route/points')
-
+// require points router
+const pointsRouter = require('./route/points');
+const trxRouter = require('./route/transactions')
+// middleware logger
 const logger = require('./middleware/logger');
 
 
 app.use(express.json());
 
-app.use('/api/points', points);
+app.use('/api/points', pointsRouter);
+app.use('/api/transactions', trxRouter)
 
 const PORT = process.env.PORT || 5000;
 
