@@ -6,7 +6,7 @@ Each request must include  `content-type: application/json`
 ## POST new transaction
 
 * POST /api/transactions
-* Request Body must include: payer, points, timestamp
+* Request Body must include: {payer, points, timestamp}
 
 
 ## GET transactions
@@ -19,4 +19,4 @@ Each request must include  `content-type: application/json`
 
 ## POST spend points
 * POST /api/points
-* Request Body must include: points
+* Request Body must include: {points: }
