@@ -3,8 +3,6 @@ const app = express();
 // require points router
 const pointsRouter = require('./route/points');
 const trxRouter = require('./route/transactions')
-// middleware logger
-const logger = require('./middleware/logger');
 
 
 app.use(express.json());
