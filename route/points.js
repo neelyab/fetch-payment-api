@@ -1,82 +1,96 @@
 const express = require('express');
-const points = require('../Points');
 const pointsRouter = express.Router();
-const totalPoints = require('../Points')
 const transactions = require('../Transactions')
 
 pointsRouter.get('/', (req, res) => {
-    for([key, value] of Object.entries({totalPoints})){
-        console.log(`${key}: ${value}`);
-    }
-    res.json(totalPoints);
+    let result;
+    if (transactions.length > 0){
+        //reduce transactions - match payer name and get sum of all points
+            result = transactions.reduce((acc, d) => {
+                const found = acc.find(a => a.payer === d.payer);
+                // const value = { payer: d.payer, points: d.points };
+                if (found) {
+                    //add points to existing points
+                    found.points +=d.points
+                }
+                else {
+                    //add the payer and points to the results array
+                acc.push({ payer: d.payer, points: d.points });
+                }
+                return acc;
+            }, []);
+    }   
+
+   return res.status(200).json(result);
 })
-// UPDATE spend points using the oldest transactions first, points can't be negative
-.put('/', (req, res) => {
+// spend points using the oldest transactions first, points can't be negative
+.post('/', (req, res) => {
     // asign points to spend to variable
     let pointsToSpend = req.body.points;
     // sort transactions by oldest first 
     const sortedTransactions = transactions.sort((x, y) => {
         return new Date(x.timestamp) - new Date(y.timestamp);
     })
-    // while loop - while points != 0 subtract points from each payer until points = 0
-    // console.log(sortedTransactions)
-    let transactionHistory;
-    while(pointsToSpend > 0){
-        let payerSpend = [];
-        sortedTransactions.forEach(trx => {
-            //create an array to keep track of what each payer is spending
-            let payer = trx.payer;
-            //check to see if payer exists in array
-            let existingPayer = payerSpend.find((p) => p.payer === payer);
-            //if array is empty or payer does not exist, add it to the array
-            if(payerSpend.length === 0 || !existingPayer){
+//initiate empty array to keep track of payer points that are spent
+    let payerSpend= [];
+    
+      sortedTransactions.forEach(trx => {
+            const payer = trx.payer;
+            const points = trx.points;
+            //check to see if payer exists in payerSpend array
+            const existingPayer = payerSpend.find((p) => p.payer === payer);
+            //if points to spend or transaction points are zero, return
+            if(pointsToSpend === 0 || points === 0){
+                return;
+            }
+            // if the payer doesn't exist in the array and the points are greater than the points to spend, subtract from points and return 
+            else if(!existingPayer && (points > pointsToSpend)){
                 let payerDetails;
-                        if (trx.points >= pointsToSpend) {
-                            console.log(trx.points)
-                            payerDetails = {
-                                payer,
-                                points: (trx.points - pointsToSpend)
-                            }
-                            payerSpend.push(payerDetails)
-                            pointsToSpend = 0;
 
-                        } else {
-                            payerDetails = {
-                                payer,
-                                points: -(trx.points),
-                            }
-                            pointsToSpend -= trx.points;
-                            payerSpend.push(payerDetails)
+                payerDetails = {
+                        payer,
+                        points: -(pointsToSpend)
                         }
-                        // console.log(`after:${pointsToSpend}`)
-                        // add the payer to the array
-                        // console.log(payerSpend)
+
+                // add payer to array
+                payerSpend.push(payerDetails);
+                pointsToSpend = 0;
+                return;
+            // if the payer doesn't exist in the array and the points are less than points to spend, subtract the points
+            } else if (!existingPayer && (points < pointsToSpend)) {
+
+                payerDetails = {
+                    payer,
+                    points: -(points),
+                    }
+
+                //update points
+                pointsToSpend -= points;
+                payerSpend.push(payerDetails);
             } else {
-                //find matched payer in payerSpend array
-               let matchedPayer = payerSpend.find(payerName => payerName.payer === payer)
-               console.log(matchedPayer)
+                //find / match payer in payerSpend array
+                let matchedPayer = payerSpend.find(payerName => payerName.payer === payer);
                         //subtract points from matched player points
-                        if (trx.points >= pointsToSpend){
+                        if (points >= pointsToSpend){
+                            // if transaction points are equal to or greater than points to spend / the array contains payer spend,
                             matchedPayer.points = matchedPayer.points - pointsToSpend;
                             pointsToSpend = 0;
-                            // console.log(payerSpend)
+                            return;
 
                         } else {
-                            pointsToSpend -= trx.points;
-                            matchedPayer.points -= trx.points
-                            console.log(matchedPayer)
+                            pointsToSpend -= points;
+                            matchedPayer.points -= points;
                         }
-                        //    payerSpend[matchedPayer.payer] = payerSpend[matchedPayer.payer].points - matchedPayer.points
-                        //    console.log(payerSpend[matchedPayer])
-                        //    console.log(pointsToSpend)
             }
         })
-        // console.log(payerSpend)
-        // pointsToSpend = 0;
-        transactionHistory = payerSpend
-    }
-    console.log(transactionHistory)
-    res.send('sorting')
+        //add timestamp to spent transactions
+        payerSpend.forEach(t=> {
+            t.timestamp = new Date();
+            // push to main transaction array
+            transactions.push(t)
+        })
+      
+        return res.status(200).json(payerSpend)
 
 })
 
