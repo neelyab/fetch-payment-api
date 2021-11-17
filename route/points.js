@@ -1,17 +1,17 @@
 const express = require('express');
 const pointsRouter = express.Router();
-const transactions = require('../Transactions')
+const transactions = require('../Transactions');
 
 pointsRouter.get('/', (req, res) => {
     let result;
-    if (transactions.length > 0){
+    if (transactions.length > 0) {
         //reduce transactions - match payer name and get sum of all points
             result = transactions.reduce((acc, d) => {
                 const found = acc.find(a => a.payer === d.payer);
                 // const value = { payer: d.payer, points: d.points };
                 if (found) {
                     //add points to existing points
-                    found.points +=d.points
+                    found.points += d.points;
                 }
                 else {
                     //add the payer and points to the results array
@@ -21,8 +21,8 @@ pointsRouter.get('/', (req, res) => {
             }, []);
     }   
 
-   return res.status(200).json(result);
-})
+        return res.status(200).json(result);
+    })
 // spend points using the oldest transactions first, points can't be negative
 .post('/', (req, res) => {
     // asign points to spend to variable
@@ -40,11 +40,11 @@ pointsRouter.get('/', (req, res) => {
             //check to see if payer exists in payerSpend array
             const existingPayer = payerSpend.find((p) => p.payer === payer);
             //if points to spend or transaction points are zero, return
-            if(pointsToSpend === 0 || points === 0){
+            if (pointsToSpend === 0 || points === 0) {
                 return;
             }
             // if the payer doesn't exist in the array and the points are greater than the points to spend, subtract from points and return 
-            else if(!existingPayer && (points > pointsToSpend)){
+            else if (!existingPayer && (points > pointsToSpend)) {
                 let payerDetails;
 
                 payerDetails = {
@@ -71,7 +71,7 @@ pointsRouter.get('/', (req, res) => {
                 //find / match payer in payerSpend array
                 let matchedPayer = payerSpend.find(payerName => payerName.payer === payer);
                         //subtract points from matched player points
-                        if (points >= pointsToSpend){
+                        if (points >= pointsToSpend) {
                             // if transaction points are equal to or greater than points to spend / the array contains payer spend,
                             matchedPayer.points = matchedPayer.points - pointsToSpend;
                             pointsToSpend = 0;
@@ -84,13 +84,13 @@ pointsRouter.get('/', (req, res) => {
             }
         })
         //add timestamp to spent transactions
-        payerSpend.forEach(t=> {
+        payerSpend.forEach(t => {
             t.timestamp = new Date();
             // push to main transaction array
-            transactions.push(t)
+            transactions.push(t);
         })
       
-        return res.status(200).json(payerSpend)
+        return res.status(200).json(payerSpend);
 
 })
 
