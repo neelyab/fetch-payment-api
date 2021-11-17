@@ -26,8 +26,15 @@ pointsRouter.get('/', (req, res) => {
 // spend points using the oldest transactions first, points can't be negative
 .post('/', (req, res) => {
     // asign points to spend to variable
+    let error;
     let pointsToSpend = req.body.points;
+    if (!pointsToSpend || (typeof pointsToSpend) !== 'number'){
+        error = `Please enter points to spend, must be a number.`
+    }
     // sort transactions by oldest first 
+    if (error){
+        return res.status(400).json({error})
+    }
     const sortedTransactions = transactions.sort((x, y) => {
         return new Date(x.timestamp) - new Date(y.timestamp);
     })
@@ -44,7 +51,7 @@ pointsRouter.get('/', (req, res) => {
                 return;
             }
             // if the payer doesn't exist in the array and the points are greater than the points to spend, subtract from points and return 
-            else if (!existingPayer && (points > pointsToSpend)) {
+            else if (!existingPayer && (points > pointsToSpend) && (points > 0)) {
                 let payerDetails;
 
                 payerDetails = {
@@ -57,7 +64,7 @@ pointsRouter.get('/', (req, res) => {
                 pointsToSpend = 0;
                 return;
             // if the payer doesn't exist in the array and the points are less than points to spend, subtract the points
-            } else if (!existingPayer && (points < pointsToSpend)) {
+            } else if (!existingPayer && (points < pointsToSpend) && (points > 0)) {
 
                 payerDetails = {
                     payer,
